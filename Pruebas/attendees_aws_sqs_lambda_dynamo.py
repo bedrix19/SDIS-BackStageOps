@@ -9,7 +9,7 @@ sqs = boto3.resource('sqs')
 
 # --- Lista de ubicaciones ---
 LOCATIONS = [
-    "Ingreso Principal",
+    "Puerta Principal",
     "Escenario Principal", "Escenario 2", "Escenario 3",
     "Zona de Comida 1", "Zona de Comida 2",
     "Bar 1", "Bar 2", "Bar 3",
@@ -17,35 +17,30 @@ LOCATIONS = [
     "Punto de Primeros Auxilios"
 ]
 
-# --- Tipos de evento---
+# --- Tipos de eventos ---
 EVENT_TYPES = {
-    "MOVEMENT": 0.4,       # Probabilidad de que el asistente se mueve
-    "SUSPICIOUS ACTIVITY": 0.05,  # Probabilidad de generar una alerta
-    "FIRE": 0.01  # Probabilidad de generar una alerta
+    "MOVEMENT": 0.8,       # Probabilidad de que el attendee se mueva
+    "SUSPICIOUS ACTIVITY": 0.1,  # Probabilidad de generar una alerta
+    "FIRE": 0.1  # Probabilidad de generar una alerta
 }
-
-# Constantes para los niveles de observación
-CROWD_LEVELS = ["bajo", "moderado", "alto", "abarrotado"]
-QUEUE_LEVELS = ["corta", "media", "larga", "muy larga"]
 
 
 class User:
     """
     Representa a un usuario general del festival. En cada acción, reporta un
-    estado completo que incluye signos vitales, y observaciones del entorno.
+    estado completo que incluye signos vitales.
     """
 
     def __init__(self):
         self.user_id = str(uuid.uuid4())
-        self.role = "Attendee"
-        self.location = "Ingreso Principal"
+        self.role = "attendee"
+        self.location = "Puerta Principal"
         self.heart_rate = random.randint(70, 90)
         print(f"Asistente {self.user_id} creado en {self.location}")
 
     def _update_vitals_and_observations(self):
         """
         Calcula el estado actual del asistente y su entorno.
-        Esta es la función clave para generar los datos base.
         """
         # 1. Actualizar Ritmo Cardíaco
         if "Escenario" in self.location:
@@ -56,20 +51,8 @@ class User:
             self.heart_rate = random.randint(80, 110)
         self.heart_rate += random.randint(-3, 3)
 
-        # 2. Determinar Nivel de Multitud
-        crowd_level = "no aplica"
-        if "Escenario" in self.location or "Zona de Comida" in self.location:
-            crowd_level = random.choice(CROWD_LEVELS)
-
-        # 3. Determinar Longitud de la Cola
-        queue_length = "no aplica"
-        if "Bar" in self.location or "Baños" or "Punto de Primeros Auxilios" in self.location:
-            queue_length = random.choice(QUEUE_LEVELS)
-
         return {
-            "heart_rate_bpm": self.heart_rate,
-            "nivel_multitud": crowd_level,
-            "longitud_cola": queue_length
+            "heart_rate_bpm": self.heart_rate
         }
 
     def simulate_action(self):
@@ -96,16 +79,17 @@ class User:
         action_data = {}
         if chosen_event == "MOVEMENT":
             new_location = random.choice(
-                [loc for loc in LOCATIONS if loc != self.location or "Ingreso Principal"])
+                [loc for loc in LOCATIONS if loc != self.location or "Puerta Principal"])
             self.location = new_location
             action_data = {"destino": new_location}
 
         elif chosen_event == "SUSPICIOUS ACTIVITY":
-            self.heart_rate = random.randint(130, 160)  # Simula estrés
-            action_data = {"descripcion": "Actividad sospechosa detectada."}
+            self.heart_rate = random.randint(130, 160)
+            action_data = {
+                "descripcion": "Actividad sospechosa detectada en {self.location}"}
 
         elif chosen_event == "FIRE":
-            self.heart_rate = random.randint(130, 160)  # Simula estrés
+            self.heart_rate = random.randint(130, 160)
             action_data = {
                 "descripcion": "Fuego detectado en {self.location}."}
 
@@ -119,7 +103,7 @@ class User:
 
 # --- Bucle Principal de la Simulación ---
 if __name__ == "__main__":
-    NUM_USERS = 2
+    NUM_USERS = 1
     users = [User() for _ in range(NUM_USERS)]
 
     print("\n--- Iniciando Simulación con Datos de Estado Completos ---\n")

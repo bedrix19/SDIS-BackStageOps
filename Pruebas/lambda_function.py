@@ -4,8 +4,8 @@ import json
 def lambda_handler(message, context):
     try:
         message = json.loads(message)
-        user_id = message.get('attendee_id')
-        print(f'Cliente {user_id} conectado.!')
+        user_id = message.get('user_id')
+        print(f'User {user_id} conectado.!')
         # Let the queue know that the message is processed
         # message.delete()
     except:
